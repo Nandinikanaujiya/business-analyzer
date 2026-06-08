@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dashboard — Business Growth Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="s-icon">📊</span>
+    <span class="s-title">BizAnalyzer</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#upload" class="nav-item active">📁 Upload Data</a>
+    <a href="#summary" class="nav-item">💰 P&L Summary</a>
+    <a href="#products" class="nav-item">🏆 Products</a>
+    <a href="#charts" class="nav-item">📈 Charts</a>
+    <a href="#insights" class="nav-item">🤖 AI Insights</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar">{{ user[0].upper() }}</div>
+    <div>
+      <p class="user-name">{{ user }}</p>
+      <a href="/logout" class="logout-link">Sign out</a>
+    </div>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<main class="main-content">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div>
+      <h2 class="page-title">Business Dashboard</h2>
+      <p class="page-sub">Upload your sales data to get started</p>
+    </div>
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  </div>
+
+  <!-- Upload Section -->
+  <section id="upload" class="section">
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">📂</div>
+      <p class="upload-title">Drop your sales file here</p>
+      <p class="upload-sub">Supports CSV and Excel (.xlsx, .xls)</p>
+      <p class="upload-cols">Required columns: <b>Date, Product Name, Quantity, Price, Cost</b></p>
+      <label class="upload-btn">
+        Choose File
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none"/>
+      </label>
+      <p class="upload-hint" id="fileHint">No file selected</p>
+    </div>
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeFile()" disabled>
+      <span>Analyze Business Data</span> →
+    </button>
+    <div id="loadingBar" class="loading-bar" style="display:none">
+      <div class="loading-fill"></div>
+    </div>
+    <div id="errorBox" class="error-box" style="display:none"></div>
+
+    <!-- Sample CSV download -->
+    <div class="sample-hint">
+      <span>Need sample data?</span>
+      <button class="sample-btn" onclick="downloadSample()">⬇ Download Sample CSV</button>
+    </div>
+  </section>
+
+  <!-- Results (hidden until analyzed) -->
+  <div id="results" style="display:none">
+
+    <!-- Summary Cards -->
+    <section id="summary" class="section">
+      <h3 class="section-title">💰 Profit & Loss Summary</h3>
+      <div class="cards-grid">
+        <div class="stat-card revenue">
+          <div class="stat-icon">💵</div>
+          <p class="stat-label">Total Revenue</p>
+          <p class="stat-value" id="s-revenue">—</p>
+        </div>
+        <div class="stat-card cost">
+          <div class="stat-icon">📦</div>
+          <p class="stat-label">Total Cost</p>
+          <p class="stat-value" id="s-cost">—</p>
+        </div>
+        <div class="stat-card profit">
+          <div class="stat-icon">📈</div>
+          <p class="stat-label">Net Profit</p>
+          <p class="stat-value" id="s-profit">—</p>
+        </div>
+        <div class="stat-card margin">
+          <div class="stat-icon">%</div>
+          <p class="stat-label">Profit Margin</p>
+          <p class="stat-value" id="s-margin">—</p>
+        </div>
+        <div class="stat-card top">
+          <div class="stat-icon">🏆</div>
+          <p class="stat-label">Top Product</p>
+          <p class="stat-value small" id="s-top">—</p>
+        </div>
+        <div class="stat-card predict">
+          <div class="stat-icon">🔮</div>
+          <p class="stat-label">Next Month Forecast</p>
+          <p class="stat-value" id="s-predict">—</p>
+          <p class="stat-trend" id="s-trend"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Monthly Table -->
+    <section class="section">
+      <h3 class="section-title">📅 Monthly Breakdown</h3>
+      <div class="table-wrap">
+        <table class="data-table" id="monthlyTable">
+          <thead><tr><th>Month</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Growth</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Products -->
+    <section id="products" class="section">
+      <h3 class="section-title">🏆 Product Performance</h3>
+      <div class="table-wrap">
+        <table class="data-table" id="productsTable">
+          <thead><tr><th>Rank</th><th>Product</th><th>Qty Sold</th><th>Revenue</th><th>Profit</th><th>Share</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section id="charts" class="section">
+      <h3 class="section-title">📊 Visual Analytics</h3>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <p class="chart-label">Revenue by Product</p>
+          <img id="chart-bar" class="chart-img" alt="Bar Chart"/>
+        </div>
+        <div class="chart-card">
+          <p class="chart-label">Monthly Profit Trend</p>
+          <img id="chart-line" class="chart-img" alt="Line Chart"/>
+        </div>
+        <div class="chart-card wide">
+          <p class="chart-label">Product Revenue Contribution</p>
+          <img id="chart-pie" class="chart-img" alt="Pie Chart"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Insights -->
+    <section id="insights" class="section">
+      <h3 class="section-title">🤖 AI Business Insights</h3>
+      <div id="insightsList" class="insights-list"></div>
+    </section>
+
+    <!-- Download Report -->
+    <section class="section">
+      <button class="download-btn" id="downloadBtn" onclick="downloadReport()">
+        📄 Download Full PDF Report
+      </button>
+    </section>
+
+    <!-- Previous Reports -->
+    {% if reports %}
+    <section class="section">
+      <h3 class="section-title">🕒 Previous Reports</h3>
+      <div class="prev-reports">
+        {% for r in reports %}
+        <div class="prev-card">
+          <div>
+            <p class="prev-file">{{ r.file }}</p>
+            <p class="prev-date">{{ r.date }}</p>
+          </div>
+          <div class="prev-stats">
+            <span class="prev-rev">₹{{ '{:,.0f}'.format(r.revenue) }}</span>
+            <span class="prev-profit {{ 'pos' if r.profit >= 0 else 'neg' }}">{{ '+' if r.profit >= 0 else '' }}₹{{ '{:,.0f}'.format(r.profit) }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+  </div><!-- /results -->
+
+</main>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>
