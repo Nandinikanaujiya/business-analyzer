@@ -13,6 +13,66 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
 import warnings
 warnings.filterwarnings('ignore')
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+# Load environment variables from .env manually
+def load_env():
+    env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+    if not os.path.exists(env_path):
+        env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, val = line.split('=', 1)
+                    os.environ[key.strip()] = val.strip()
+
+load_env()
+
+def send_email_otp(to_email, otp_code):
+    smtp_email = os.environ.get('SMTP_EMAIL')
+    smtp_password = os.environ.get('SMTP_PASSWORD')
+    if not smtp_email or not smtp_password or smtp_email == 'your-email@gmail.com':
+        print(f"[Simulated SMTP] Credentials missing. Code: {otp_code}")
+        return False
+    
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = smtp_email
+        msg['To'] = to_email
+        msg['Subject'] = "🔐 OTP Verification - Business ERP Suite"
+        
+        body = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; background-color: #0f1117; color: #e0e0e0; padding: 24px;">
+            <div style="max-width: 480px; margin: 0 auto; background-color: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; padding: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+              <h2 style="color: #6c63ff; text-align: center; font-family: 'Syne', sans-serif;">Business ERP Suite</h2>
+              <hr style="border: 0; border-top: 1px solid #2a2d3a; margin: 20px 0;"/>
+              <p>Hello,</p>
+              <p>Thank you for registering. Use the following One-Time Password (OTP) to complete your signup process:</p>
+              <div style="background-color: #0d0f18; border: 1px solid #2a2d3a; padding: 16px; border-radius: 8px; text-align: center; margin: 24px 0;">
+                <span style="font-size: 28px; letter-spacing: 4px; font-weight: bold; color: #00d4aa;">{otp_code}</span>
+              </div>
+              <p style="font-size: 12px; color: #888;">This OTP is valid for 10 minutes. If you did not request this code, please ignore this email.</p>
+            </div>
+          </body>
+        </html>
+        """
+        msg.attach(MIMEText(body, 'html'))
+        
+        # Connect and send via Gmail SMTP
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(smtp_email, smtp_password)
+        server.sendmail(smtp_email, to_email, msg.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
 
 app = Flask(__name__)
 app.secret_key = 'biz_analyzer_secure_secret_2026'
@@ -97,12 +157,28 @@ def send_otp():
     otp = str(random.randint(100000, 999999))
     session['otp'] = otp
     
-    # Return OTP inside the response for simulation
-    return jsonify({
-        'success': True,
-        'message': 'OTP sent successfully! (Simulated)',
-        'otp': otp
-    })
+    is_email = '@' in email_or_phone
+    email_sent = False
+    
+    if is_email:
+        email_sent = send_email_otp(email_or_phone, otp)
+        
+    if is_email and email_sent:
+        return jsonify({
+            'success': True,
+            'message': f'Verification OTP sent to {email_or_phone}!',
+            'simulated': False
+        })
+    else:
+        msg = 'OTP sent successfully! (Simulated)'
+        if is_email:
+            msg = 'SMTP credentials missing or incorrect. Falling back to simulated verification.'
+        return jsonify({
+            'success': True,
+            'message': msg,
+            'otp': otp,
+            'simulated': True
+        })
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

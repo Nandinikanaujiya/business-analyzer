@@ -111,7 +111,13 @@ async function sendSimulatedOTP() {
     });
     const data = await res.json();
     if(data.success) {
-      showSimulatedOTPAlert(data.otp);
+      if (data.simulated) {
+        showSimulatedOTPAlert(data.otp, data.message);
+      } else {
+        alert(data.message);
+        const toast = document.getElementById('otpToast');
+        if(toast) toast.style.display = 'none';
+      }
     } else {
       alert(data.error || "Failed to send OTP.");
     }
@@ -120,7 +126,7 @@ async function sendSimulatedOTP() {
   }
 }
 
-function showSimulatedOTPAlert(code) {
+function showSimulatedOTPAlert(code, msg) {
   let toast = document.getElementById('otpToast');
   if(!toast) {
     toast = document.createElement('div');
@@ -128,7 +134,7 @@ function showSimulatedOTPAlert(code) {
     toast.style.cssText = "position:fixed;top:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg, #6c63ff, #00d4aa);color:#fff;padding:16px 28px;border-radius:12px;box-shadow:0 15px 40px rgba(0,0,0,0.4);z-index:9999;font-family:'Mulish',sans-serif;font-size:14px;font-weight:600;text-align:center;animation:slideDown 0.4s ease;";
     document.body.appendChild(toast);
   }
-  toast.innerHTML = `💬 Simulated Verification Code:<br/><b style="font-size:22px;letter-spacing:3px;display:block;margin-top:6px;color:#fff;">${code}</b>`;
+  toast.innerHTML = `<span style="font-size:11px;color:rgba(255,255,255,0.8);">${msg}</span><br/><b style="font-size:22px;letter-spacing:3px;display:block;margin-top:6px;color:#fff;">${code}</b>`;
   toast.style.display = 'block';
   
   if(!document.getElementById('toastStyle')) {

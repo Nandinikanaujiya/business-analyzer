@@ -8,6 +8,10 @@ __pycache__/
 *.db
 *.sqlite3
 
+# Credentials & environment variables
+.env
+.env.local
+
 # User uploads and reports
 business-analyzer/uploads/
 business-analyzer/reports/
