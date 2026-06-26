@@ -1,0 +1,14 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Databases
+*.db
+*.sqlite3
+
+# User uploads and reports
+business-analyzer/uploads/
+business-analyzer/reports/
+business-analyzer/qr_code.png

@@ -10,12 +10,12 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Mulish',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(108,99,255,0.12) 0%,transparent 70%);pointer-events:none;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:48px 44px;width:100%;max-width:420px;position:relative;box-shadow:0 40px 100px rgba(0,0,0,0.5);}
-.logo{text-align:center;margin-bottom:36px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:100%;max-width:440px;position:relative;box-shadow:0 40px 100px rgba(0,0,0,0.5);}
+.logo{text-align:center;margin-bottom:28px;}
 .logo-icon{font-size:36px;display:block;margin-bottom:8px;}
 .logo h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);}
 .logo p{font-size:13px;color:var(--muted);margin-top:4px;}
-.tab-row{display:flex;background:#0d0f18;border-radius:10px;padding:4px;margin-bottom:32px;}
+.tab-row{display:flex;background:#0d0f18;border-radius:10px;padding:4px;margin-bottom:28px;}
 .tab{flex:1;text-align:center;padding:9px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted);text-decoration:none;transition:.2s;}
 .tab.active{background:var(--accent);color:#fff;}
 .form-group{margin-bottom:18px;}
@@ -24,6 +24,8 @@ input{width:100%;background:#0d0f18;border:1px solid var(--border);border-radius
 input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15);}
 .btn{width:100%;background:var(--accent);border:none;border-radius:10px;padding:14px;color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:.2s;letter-spacing:.04em;}
 .btn:hover{background:#5a52e8;transform:translateY(-1px);}
+.btn.sec { background: transparent; border: 1px solid var(--border); color: var(--text2); margin: 0; }
+.btn.sec:hover { background: rgba(255,255,255,0.05); }
 .flash{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;}
 .flash.error{background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.3);color:var(--err);}
 .flash.success{background:rgba(0,212,170,.12);border:1px solid rgba(0,212,170,.3);color:var(--suc);}
@@ -33,29 +35,110 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15)
 <div class="card">
   <div class="logo">
     <span class="logo-icon">📊</span>
-    <h1>Business Growth Analyzer</h1>
-    <p>Insights for small business owners</p>
+    <h1>Business ERP Suite</h1>
+    <p>Complete analytics and operations control</p>
   </div>
   <div class="tab-row">
-    <a href="/login" class="tab {{ 'active' if mode=='login' }}">Login</a>
-    <a href="/register" class="tab {{ 'active' if mode=='register' }}">Register</a>
+    <a href="/login" class="tab {{ 'active' if mode=='login' }}" id="tabLogin">Login</a>
+    <a href="/register" class="tab {{ 'active' if mode=='register' }}" id="tabRegister">Register</a>
   </div>
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for cat, msg in messages %}
       <div class="flash {{ cat }}">{{ msg }}</div>
     {% endfor %}
   {% endwith %}
+  
   <form method="POST">
+    {% if mode == 'register' %}
+    <!-- 1. Email or Phone -->
+    <div class="form-group">
+      <label>Email or Phone Number</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="email_or_phone" name="email_or_phone" required placeholder="email@example.com or 9876543210"/>
+        <button type="button" class="btn sec" style="width:auto;padding:10px 16px;" onclick="sendSimulatedOTP()">Send OTP</button>
+      </div>
+    </div>
+    
+    <!-- 2. OTP Code -->
+    <div class="form-group">
+      <label>OTP Code Verification</label>
+      <input type="text" name="otp" required placeholder="Enter the 6-digit OTP code"/>
+    </div>
+    {% endif %}
+
+    <!-- 3. Username -->
     <div class="form-group">
       <label>Username</label>
       <input type="text" name="username" required placeholder="Enter username" autocomplete="username"/>
     </div>
+    
+    <!-- 4. Password -->
     <div class="form-group">
       <label>Password</label>
       <input type="password" name="password" required placeholder="Enter password" autocomplete="{{ 'current-password' if mode=='login' else 'new-password' }}"/>
     </div>
+
+    {% if mode == 'register' %}
+    <!-- 5. CAPTCHA -->
+    <div class="form-group">
+      <label>Verification Captcha</label>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#0d0f18;border:1px solid var(--border);border-radius:10px;padding:8px 16px;margin-bottom:12px;">
+        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:6px;color:var(--accent2);text-shadow:0 0 10px rgba(0,212,170,0.3);">{{ captcha }}</span>
+        <a href="" style="color:var(--muted);text-decoration:none;font-size:16px;">🔄 Refresh</a>
+      </div>
+      <input type="text" name="captcha" required placeholder="Type the CAPTCHA code above"/>
+    </div>
+    {% endif %}
+
+    <!-- 6. Submit Button -->
     <button class="btn" type="submit">{{ 'Sign In →' if mode=='login' else 'Create Account →' }}</button>
   </form>
 </div>
+
+{% if mode == 'register' %}
+<script>
+async function sendSimulatedOTP() {
+  const contact = document.getElementById('email_or_phone').value.trim();
+  if(!contact) {
+    alert("Please enter your Email or Phone number first.");
+    return;
+  }
+  try {
+    const res = await fetch('/send_otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email_or_phone: contact })
+    });
+    const data = await res.json();
+    if(data.success) {
+      showSimulatedOTPAlert(data.otp);
+    } else {
+      alert(data.error || "Failed to send OTP.");
+    }
+  } catch(e) {
+    alert("Failed to connect to server.");
+  }
+}
+
+function showSimulatedOTPAlert(code) {
+  let toast = document.getElementById('otpToast');
+  if(!toast) {
+    toast = document.createElement('div');
+    toast.id = 'otpToast';
+    toast.style.cssText = "position:fixed;top:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg, #6c63ff, #00d4aa);color:#fff;padding:16px 28px;border-radius:12px;box-shadow:0 15px 40px rgba(0,0,0,0.4);z-index:9999;font-family:'Mulish',sans-serif;font-size:14px;font-weight:600;text-align:center;animation:slideDown 0.4s ease;";
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `💬 Simulated Verification Code:<br/><b style="font-size:22px;letter-spacing:3px;display:block;margin-top:6px;color:#fff;">${code}</b>`;
+  toast.style.display = 'block';
+  
+  if(!document.getElementById('toastStyle')) {
+    const style = document.createElement('style');
+    style.id = 'toastStyle';
+    style.innerHTML = `@keyframes slideDown { from{top:-100px;opacity:0} to{top:24px;opacity:1} }`;
+    document.head.appendChild(style);
+  }
+}
+</script>
+{% endif %}
 </body>
 </html>
